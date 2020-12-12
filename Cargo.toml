@@ -1,0 +1,24 @@
+[package]
+name = "spectrum"
+version = "0.1.0"
+authors = ["dlingyang <ceamel@hotmail.com>"]
+edition = "2018"
+repository = "https://github/dlinyang/ultraviolet_ray"
+categories = ["graphics"]
+
+[lib]
+name = "solas"
+path = "src/lib.rs"
+
+[dependencies]
+num = "0.3.1"
+rand = "0.7.3"
+image = "0.23.12"
+rmu = {path = "../rmu"}
+
+
+[[example]]
+ name = "sphere"
+
+[[example]]
+name = "cube"
