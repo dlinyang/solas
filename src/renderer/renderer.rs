@@ -3,7 +3,7 @@ use crate::{
     format::image_buff::ImageBuff,
     scene::*,
 };
-use rand::prelude::*;
+use crate::base::random::*;
 use rmu::vector::{Color, Vector3};
 use std::f32::MAX;
 use std::sync::Arc;
@@ -56,11 +56,11 @@ impl Renderer {
         for x in 0..w {
             for y in 0..h {
                 let mut pixel = Color::default();
-                let mut rng = rand::thread_rng();
+                let mut rng = PCG32::new();
 
                 for _ in 0..sample_number {
-                    let u = ((x as f32) + rng.gen_range(0f32, 1f32)) / w as f32;
-                    let v = ((y as f32) + rng.gen_range(0f32, 1f32)) / h as f32;
+                    let u = ((x as f32) + rng.rand()) / w as f32;
+                    let v = ((y as f32) + rng.rand()) / h as f32;
                     let ray = self.scene.camera.get_ray(u, v);
                     pixel = pixel + Renderer::shade(&self.scene, &ray, 0, self.depth);
                 }
@@ -145,11 +145,11 @@ impl Renderer {
         for y in tile.y..(tile.y + tile.h) {
            for x in tile.x..(tile.x + tile.w) {
                let mut pixel = Color::default();
-               let mut rng = rand::thread_rng();
+               let mut rng = XorShift32::new();
 
                for _ in 0..sample_number {
-                   let u = ((x as f32) + rng.gen_range(0f32, 1f32)) / w as f32;
-                   let v = ((y as f32) + rng.gen_range(0f32, 1f32)) / h as f32;
+                   let u = ((x as f32) + rng.rand()) / w as f32;
+                   let v = ((y as f32) + rng.rand()) / h as f32;
                    let ray = scene.camera.get_ray(u, v);
                    pixel = pixel + Renderer::shade(&scene,&ray, 0, max_depth);
                }

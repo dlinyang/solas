@@ -1,5 +1,5 @@
 [package]
-name = "spectrum"
+name = "solas"
 version = "0.1.0"
 authors = ["dlingyang <ceamel@hotmail.com>"]
 edition = "2018"
@@ -12,9 +12,8 @@ path = "src/lib.rs"
 
 [dependencies]
 num = "0.3.1"
-rand = "0.7.3"
 image = "0.23.12"
-rmu = {path = "../rmu"}
+rmu = {git = "https://github.com/dlinyang/rmu"}
 
 
 [[example]]

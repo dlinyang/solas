@@ -24,8 +24,8 @@ impl Material for Lambertian {
     }
 
     fn scatter(&self, _ray: &Ray, hit: &Hit) -> Scatter {
-        let target = hit.position + hit.normal + random_in_sphere();
-        let scattered = Ray::new(hit.position, target - hit.position, hit.time);
+        let target = hemisphere_suface_distributrion(hit.normal);
+        let scattered = Ray::new(hit.position,target, hit.time);
         Scatter::new(self.albedo, scattered)
     }
 }
@@ -53,7 +53,7 @@ impl Material for Metal {
 
     fn scatter(&self, ray: &Ray, hit: &Hit) -> Scatter {
         let reflected = reflect(ray.direction.normalized(), hit.normal);
-        let scattered = Ray::new(hit.position, reflected + self.fuzz * random_in_sphere(), hit.time);
+        let scattered = Ray::new(hit.position, reflected + self.fuzz * hemisphere_suface_distributrion(hit.normal), hit.time);
         Scatter::new(self.albedo, scattered)
     }
 }

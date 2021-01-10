@@ -8,7 +8,7 @@ use rmu::vector::Vector3;
 
 use std::sync::Arc;
 
-use rand::prelude::*;
+use solas::base::random::RNG;
 
 fn main() {
 
@@ -16,7 +16,7 @@ fn main() {
 
     let w: usize = 800;
     let h: usize = 400;
-    let s: usize = 100;
+    let s: usize = 10;
     let canvas = Canvas::new(w, h, 1.0, 2.0);
 
     let look_from = Vector3::new(-8.0, 5.0, 0.0);
@@ -50,16 +50,16 @@ fn main() {
     let mut material2 = Dielectric::new("material2".into());
     material2.refract_coe = 1.5;
     let mut scene = Scene::new();
-    let mut rng = rand::thread_rng();
+    let mut rng = RNG::new();
 
     for x in 0..20 {
-        let choose: f32 = rng.gen();
-        let center = Vector3::new(5.0 * rng.gen::<f32>(), 4.0 * rng.gen::<f32>(), -0.2);
+        let choose: f32 = rng.rand();
+        let center = Vector3::new(5.0 * rng.rand(), 4.0 * rng.rand(), -0.2);
         if choose < 0.8 {
             let mut material = Lambertian::new(format!("material{}",x+3));
-            material.albedo = Vector3::new(rng.gen::<f32>() * rng.gen::<f32>(),
-                                           rng.gen::<f32>() * rng.gen::<f32>(),
-                                           rng.gen::<f32>() * rng.gen::<f32>());
+            material.albedo = Vector3::new(rng.rand() * rng.rand(),
+                                           rng.rand() * rng.rand(),
+                                           rng.rand() * rng.rand());
             let sphere = Sphere::new(format!("sphere{}", x + 4),format!("material{}", x + 3))
                 .with_radius(0.2)
                 .with_center(center);
@@ -68,10 +68,10 @@ fn main() {
         }
         else if choose < 0.95 {
             let mut material = Metal::new(format!("material{}",x+3));
-            material.albedo = Vector3::new(rng.gen(),
-                                           rng.gen(),
-                                           rng.gen());
-            material.fuzz = 0.5 * rng.gen::<f32>();
+            material.albedo = Vector3::new(rng.rand(),
+                                           rng.rand(),
+                                           rng.rand());
+            material.fuzz = 0.5 * rng.rand();
             let sphere = Sphere::new(format!("sphere{}", x + 4),format!("material{}", x + 3))
                .with_radius(0.2)
                .with_center(center);
@@ -80,7 +80,7 @@ fn main() {
         }
         else {
             let mut material = Dielectric::new(format!("material{}",x+3));
-            material.refract_coe = 2.0 * rng.gen::<f32>();
+            material.refract_coe = 2.0 * rng.rand();
             let sphere = Sphere::new(format!("sphere{}", x + 4),format!("material{}", x + 3))
                .with_radius(0.2)
                .with_center(center);
@@ -99,7 +99,7 @@ fn main() {
     let renderer = Renderer::new(scene, canvas, s);
 
     let start = std::time::Instant::now();
-    let image = renderer.multi_thread_render(64, 64, 16, 50);
+    let image = renderer.multi_thread_render(64, 64, 16, 10);
 
     let end = std::time::Instant::now();
     println!("coast time: {:?}", end.duration_since(start));

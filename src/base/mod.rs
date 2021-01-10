@@ -8,6 +8,7 @@ pub mod bvh;
 pub mod light;
 pub mod optics;
 pub mod tone_mapping;
+pub mod random;
 
 pub use camera::Camera;
 pub use material::*;

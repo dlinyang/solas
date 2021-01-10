@@ -1,14 +1,16 @@
 use rmu::vector::Vector3;
-use rand::prelude::*;
+use super::random::RNG;
+use std::f32::consts::PI;
 
-//calculate circumstance illumination
-pub fn random_in_sphere() -> Vector3 {
-    let mut rng = rand::thread_rng();
-    let mut p = 2.0 * Vector3::new(rng.gen(),rng.gen(),rng.gen()) - Vector3::broadcast(1.0);
-    while p.length_square() >= 1.0 {
-        p = 2.0 * Vector3::new(rng.gen(),rng.gen(),rng.gen()) - Vector3::broadcast(1.0);
-    }
-    p
+//calculate  diffuse refkection with Monte Carlo method
+pub fn hemisphere_suface_distributrion(normal: Vector3) -> Vector3 {
+    use rmu::matrix::Matrix3x3;
+
+    let mut rng = RNG::new();
+
+    let rotation = Matrix3x3::rotation3(rng.rand() * 0.5f32 * PI, rng.rand() * 0.5f32 * PI, rng.rand() * 0.5f32 * PI);
+
+    rotation * normal
 }
 
 //reflection

@@ -15,7 +15,7 @@ fn main() {
 
     let w: usize = 800;
     let h: usize = 400;
-    let s: usize = 100;
+    let s: usize = 10;
     
     let canvas = Canvas::new(w, h, 1.0, 2.0);
 
@@ -54,7 +54,7 @@ fn main() {
     let renderer = Renderer::new(scene, canvas, s);
 
     let start = std::time::Instant::now();
-    let image = renderer.multi_thread_render(64, 64, 16, 50);
+    let image = renderer.multi_thread_render(64, 64, 16, 10);
 
     let end = std::time::Instant::now();
     println!("coast time: {:?}", end.duration_since(start));

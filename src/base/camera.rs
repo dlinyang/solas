@@ -60,14 +60,14 @@ impl Default for Camera {
     }
 }
 
-use rand::prelude::*;
+use crate::base::random::*;
 
 fn random_in_unit_disk() -> Vector3 {
-    let mut rng = thread_rng();
+    let mut rng = PCG32::new();
     let mut p = Vector3::broadcast(1.0);
 
     while Vector3::dot(p,p) >= 1.0 {
-        p = 2.0 * Vector3::new(rng.gen_range(0f32,1f32), rng.gen_range(0f32,1f32), 0.0) - Vector3::new(1.0, 1.0, 0.0);
+        p = 2.0 * Vector3::new(rng.rand(), rng.rand(), 0.0) - Vector3::new(1.0, 1.0, 0.0);
     }
 
     p
