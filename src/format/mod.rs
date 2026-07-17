@@ -1,5 +1,3 @@
-pub mod image_buff;
-pub mod image_file;
+pub mod image_data;
 
-pub use image_buff::ImageBuff;
-pub use image_file::ImageFile;
+pub use image_data::*;

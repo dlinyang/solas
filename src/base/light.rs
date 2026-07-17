@@ -1,4 +1,5 @@
-use rmu::vector::{Vector3,Color};
+use gk_math::base::f32::Vec3;
+use gk_math::color::RGB as Color;
 use super::ray::Ray;
 
 pub trait Light {
@@ -6,7 +7,7 @@ pub trait Light {
 }
 
 pub struct PointLight {
-    pub origin: Vector3,
+    pub origin: Vec3,
     pub color: Color,
     pub brightness: f32,
 }
@@ -14,13 +15,13 @@ pub struct PointLight {
 impl PointLight {
     pub fn new() -> Self {
         PointLight {
-            origin: Vector3::new(2f32, 0f32, 1f32),
-            color: Vector3::broadcast(1f32),
+            origin: Vec3::new(2f32, 0f32, 1f32),
+            color: Vec3::new(1f32, 1f32, 1f32).into(),
             brightness: 1.0,
         }
     }
 
-    pub fn create(origin: Vector3, color: Color, brightness: f32) -> Self {
+    pub fn create(origin: Vec3, color: Color, brightness: f32) -> Self {
         PointLight {
             origin,
             color,
@@ -33,11 +34,11 @@ impl Light for PointLight {
     //get the light r
     fn radiation(&self, ray: &Ray) -> Color {
         let light_direction = self.origin - ray.origin;
-        let cos = Vector3::dot(light_direction, ray.direction) / (light_direction.length() * ray.direction.length());
+        let cos = Vec3::dot(&light_direction, &ray.direction) / (light_direction.length() * ray.direction.length());
         if cos > 0.0 {
-            self.color * cos
+            self.color  * cos
         } else {
-            Color::default()
+            Color::new(0.0, 0.0, 0.0)
         }
     }
 }

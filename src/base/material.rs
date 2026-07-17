@@ -1,6 +1,6 @@
 use super::ray::Ray;
 use super::intersect::Hit;
-use rmu::vector::Color;
+use gk_math::color::RGB as Color;
 
 pub struct Scatter {
     pub attenuation: Color,
@@ -20,10 +20,10 @@ impl Scatter {
 pub trait Material {
     fn name(&self) -> String;
     /// Material's scatter property
-    fn scatter(&self,ray: &Ray, hit: &Hit) -> Scatter;
-    /// Luminescent materials 
-    fn emit(&self, _ray: &Ray) -> Color { 
-        Color::default() 
+    fn scatter(&self, ray: &Ray, hit: &Hit) -> Scatter;
+    /// Luminescent materials
+    fn emit(&self, _ray: &Ray) -> Color {
+        Color::new(0.0, 0.0, 0.0)
     }
 }
 

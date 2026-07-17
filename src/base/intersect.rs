@@ -1,17 +1,17 @@
-use rmu::vector::{Vector2,Vector3};
+use gk_math::base::f32::{Vec2,Vec3};
 use super::ray::Ray;
 
 pub struct Hit{
     pub time: f32,
-    pub position: Vector3,
-    pub normal: Vector3,
-    pub uv: Vector2,
+    pub position: Vec3,
+    pub normal: Vec3,
+    pub uv: Vec2,
     pub material_name: String,
 }
 
 impl Hit {
     #[inline]
-    pub fn new(time: f32, position: Vector3, normal: Vector3, uv: Vector2, material_name: String) -> Self {
+    pub fn new(time: f32, position: Vec3, normal: Vec3, uv: Vec2, material_name: String) -> Self {
         Self {
             time,
             position,
@@ -26,14 +26,14 @@ impl Default for Hit {
     fn default() -> Self {
         Self {
             time: 0.0,
-            position: Vector3::broadcast(0.0),
-            normal: Vector3::broadcast(0.0),
-            uv: Vector2::broadcast(0.0),
+            position: Vec3::new(1.0,1.0, 1.0),
+            normal: Vec3::new(1.0,1.0, 1.0),
+            uv: Vec2::new(1.0, 1.0),
             material_name: String::new(),
         }
     }
 }
 
-pub trait Intersect { 
+pub trait Intersect {
     fn intersect(&self, ray: &Ray,t_min: f32,t_max: f32) -> Option<Hit>;
 }

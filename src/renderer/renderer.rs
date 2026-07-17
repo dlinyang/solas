@@ -1,10 +1,8 @@
 use crate::{
-    base::{ray::Ray, tone_mapping::*},
-    format::image_buff::ImageBuff,
-    scene::*,
+    ImageData, base::ray::Ray,  scene::*
 };
 use crate::base::random::*;
-use rmu::vector::{Color, Vector3};
+use gk_math::color::RGB as Color;
 use std::f32::MAX;
 use std::sync::Arc;
 use std::collections::VecDeque;
@@ -14,7 +12,6 @@ pub struct Renderer {
     pub scene: Arc<Scene>,
     pub canvas: Canvas,
     pub depth: usize,
-    pub tone_mapping: ToneMapping,
 }
 
 pub struct Tile {
@@ -25,7 +22,6 @@ pub struct Tile {
 }
 
 impl Tile {
-
     pub fn new(x: usize, y: usize, w: usize, h: usize) -> Self {
         Self {
             x,
@@ -43,19 +39,18 @@ impl Renderer {
             scene: Arc::new(scene),
             canvas,
             depth,
-            tone_mapping: ToneMapping::Linear,
         }
     }
 
     //render a picture
-    pub fn render(&self, sample_number: usize) -> ImageBuff {
+    pub fn render(&self, sample_number: usize) -> ImageData {
         let w = self.canvas.width;
         let h = self.canvas.height;
-        let mut image_buff = ImageBuff::create(w, h);
+        let mut image_buff = ImageData::new(w, h);
 
         for x in 0..w {
             for y in 0..h {
-                let mut pixel = Color::default();
+                let mut pixel = Color::new(1.0, 1.0, 1.0);
                 let mut rng = PCG32::new();
 
                 for _ in 0..sample_number {
@@ -67,15 +62,14 @@ impl Renderer {
 
                 pixel = pixel / (sample_number as f32);
 
-                let [r, g, b] = self.tone_mapping.tone_mapping(pixel);
-                image_buff.data[y * w + x] =u32::from_ne_bytes([r, g, b, 255]);
+                image_buff[(x,y)] = pixel;
             }
         }
 
         image_buff
     }
 
-    pub fn multi_thread_render(&self, tile_w: usize, tile_h: usize, thread_number: usize, sample_number: usize) -> ImageBuff {
+    pub fn multi_thread_render(&self, tile_w: usize, tile_h: usize, thread_number: usize, sample_number: usize) -> ImageData {
 
         let mut tile_queue: VecDeque<Tile> = VecDeque::new();
 
@@ -83,7 +77,7 @@ impl Renderer {
         let mut y: usize = 0;
         let mut w: usize = tile_w;
         let mut h: usize = tile_h;
-        
+
         while y < self.canvas.height {
             while x < self.canvas.width {
 
@@ -106,7 +100,7 @@ impl Renderer {
 
         let mut render_queue = VecDeque::new();
 
-        let mut image_buff = ImageBuff::create(self.canvas.width, self.canvas.height);
+        let mut image_buff = ImageData::new(self.canvas.width, self.canvas.height);
 
         while !tile_queue.is_empty() {
             if render_queue.len() <= thread_number {
@@ -122,7 +116,7 @@ impl Renderer {
             } else {
                 if let Some(render_handle) = render_queue.pop_front() {
                     let (tile,colors):(Tile,Vec<Color>) = render_handle.join().unwrap();
-                    Renderer::write_tile(tile, colors, &self.canvas, &self.tone_mapping, &mut image_buff);
+                    Renderer::write_tile(&tile, &colors, &mut image_buff);
                 }
             }
         }
@@ -130,7 +124,7 @@ impl Renderer {
         while !render_queue.is_empty() {
             if let Some(render_handle) = render_queue.pop_front() {
                     let (tile,colors):(Tile,Vec<Color>) = render_handle.join().unwrap();
-                    Renderer::write_tile(tile, colors, &self.canvas, &self.tone_mapping, &mut image_buff);
+                    Renderer::write_tile(&tile, &colors, &mut image_buff);
             }
         }
 
@@ -144,7 +138,7 @@ impl Renderer {
 
         for y in tile.y..(tile.y + tile.h) {
            for x in tile.x..(tile.x + tile.w) {
-               let mut pixel = Color::default();
+               let mut pixel = Color::new(1.0, 1.0, 1.0);
                let mut rng = XorShift32::new();
 
                for _ in 0..sample_number {
@@ -179,16 +173,14 @@ impl Renderer {
         for light in scene.lights.iter() {
             attenuation = attenuation + light.radiation(ray);
         }
-        
+
         attenuation
     }
 
-    fn write_tile(tile: Tile, colors: Vec<Color>, canvas: &Canvas, tone_mapping: &ToneMapping, image_buff: &mut ImageBuff) {
-        let w = canvas.width;
+    fn write_tile(tile: &Tile, colors: &Vec<Color>, img_buf: &mut ImageData) {
         for y in 0..tile.h {
             for x in 0..tile.w {
-                let [r, g, b] = tone_mapping.tone_mapping(colors[y * tile.w + x]);
-                image_buff.data[(y + tile.y) * w + (x + tile.x)] =u32::from_ne_bytes([r, g, b, 255]);
+                img_buf[((x + tile.x), (tile.y + y))] = colors[y * tile.w + x];
             }
         }
     }

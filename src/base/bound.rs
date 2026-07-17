@@ -1,11 +1,17 @@
 use crate::base::ray::Ray;
-use rmu::vector::Vector3;
+use gk_math::base::f32::Vec3;
 
+/// Bounding box trait
+/// mostly is AABB
+/// maybe will use OBB
 pub trait Bound {
     fn intersect(&self, ray :&Ray) -> bool;
     fn contain(&self, node: &Self) -> bool;
-    fn point_in(&self, point: &Vector3) -> bool;
-    fn sorround(left_box: &Self, right_box: &Self) -> Self;
+    fn point_in(&self, point: &Vec3) -> bool;
+    fn surround(left_box: &Self, right_box: &Self) -> Self;
+    fn surface_area(&self) -> f32;
+    fn centroid(&self) -> Vec3;
+    fn volume(&self) -> f32;
 }
 
 pub trait BoundBuilder {
@@ -13,7 +19,7 @@ pub trait BoundBuilder {
 }
 
 //axis aliasing bounding box
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct AABB {
     pub x_min: f32,
     pub x_max: f32,
@@ -32,6 +38,20 @@ impl AABB {
             y_max,
             z_min,
             z_max,
+        }
+    }
+
+    // Returns the longest axis (0=x, 1=y, 2=z)
+    pub fn longest_axis(&self) -> u32 {
+        let dx = self.x_max - self.x_min;
+        let dy = self.y_max - self.y_min;
+        let dz = self.z_max - self.z_min;
+        if dx >= dy && dx >= dz {
+            0
+        } else if dy >= dz {
+            1
+        } else {
+            2
         }
     }
 }
@@ -55,7 +75,6 @@ fn max(x: f32, y: f32) -> f32{
 fn min(x: f32, y: f32) -> f32 {
     if x < y { x } else { y }
 }
-
 
 impl Bound for AABB {
     fn intersect(&self, ray: &Ray) -> bool {
@@ -86,9 +105,9 @@ impl Bound for AABB {
         }
     }
 
-    fn point_in(&self, point: &Vector3) -> bool {
+    fn point_in(&self, point: &Vec3) -> bool {
         if self.x_min > point.x || self.x_max < point.x {
-            false 
+            false
         } else if self.y_min > point.x || self.y_max < point.y {
             false
         } else if self.z_min > point.z || self.z_min < point.z {
@@ -99,7 +118,7 @@ impl Bound for AABB {
     }
 
 
-    fn sorround(left_box: &AABB, right_box: &AABB) -> AABB {
+    fn surround(left_box: &AABB, right_box: &AABB) -> AABB {
         AABB::new(
             min(left_box.x_min, right_box.x_min),
             max(left_box.x_max, right_box.x_max),
@@ -107,6 +126,28 @@ impl Bound for AABB {
             max(left_box.y_max, right_box.y_max),
             min(left_box.z_min, right_box.z_min),
             max(left_box.z_max, right_box.z_max)
-        )  
+        )
+    }
+
+    fn surface_area(&self) -> f32 {
+        let dx = self.x_max - self.x_min;
+        let dy = self.y_max - self.y_min;
+        let dz = self.z_max - self.z_min;
+        2.0 * (dx * dy + dy * dz + dz * dx)
+    }
+
+    fn centroid(&self) -> Vec3 {
+        Vec3::new(
+            (self.x_min + self.x_max) * 0.5,
+            (self.y_min + self.y_max) * 0.5,
+            (self.z_min + self.z_max) * 0.5,
+        )
+    }
+
+    fn volume(&self) -> f32 {
+        let dx = self.x_max - self.x_min;
+        let dy = self.y_max - self.y_min;
+        let dz = self.z_max - self.z_min;
+        dx * dy * dz
     }
 }

@@ -1,16 +1,19 @@
 use crate::{base::ray::Ray, base::intersect::*, base::material::* ,base::camera::Camera, base::light::Light };
 use crate::material::background::*;
 use crate::base::object::Object;
-use crate::base::bound::*;
+// use crate::base::bound::*;
 use crate::base::bvh::BVHTree;
 
 use std::sync::Arc;
 use std::collections::HashMap;
 
+pub type ObjectARef = Arc<dyn Object + Sync + Send>;
+pub type MaterialARef = Arc<dyn Material + Sync + Send>;
+
 pub struct Scene {
-    pub objects: HashMap<String,Arc<dyn Object + Sync + Send>>,
-    pub bvh_tree: Option<BVHTree<AABB>>, // object contain bvh tree
-    pub material: HashMap<String,Arc<dyn Material + Sync + Send>>,
+    pub objects: HashMap<String,ObjectARef>,
+    pub bvh_tree: Option<BVHTree>, // object contain bvh tree
+    pub material: HashMap<String, MaterialARef>,
     pub skybox: Arc<dyn SkyBox + Sync + Send>,
     pub lights: Vec<Arc<dyn Light + Sync + Send>>,
     pub camera: Camera,
@@ -30,23 +33,18 @@ impl Scene {
     }
 
     pub fn add_object(&mut self, object: Arc<dyn Object + Send + Sync>) {
-
-        if let None = self.bvh_tree  {
-            self.bvh_tree = Some(BVHTree::new(object.get_aabb(), Some(object.name())));
-        } else {
-            let bvh_tree = self.bvh_tree.take().unwrap();
-            let node = object.get_aabb();
-            let mut parent = BVHTree::new(Bound::sorround(&bvh_tree.node, &node), None);
-            parent.left = Some(Arc::new(bvh_tree));
-            parent.right = Some(Arc::new(BVHTree::new(node, Some(object.name()))));
-            self.bvh_tree = Some(parent);
-        }
-
         self.objects.insert(object.name(),object);
     }
 
-    pub fn add_material(&mut self, material: Arc<dyn Material + Send + Sync>) {
-        self.material.insert(material.name(),material);
+    pub fn build_bvh_tree(&mut self) {
+        let boxes: Vec<_> = self.objects.iter().map(|(name, obj)| (name.clone(), obj.get_aabb())).collect();
+        self.bvh_tree = Some(BVHTree::sah_build(boxes));
+    }
+
+    pub fn add_material(&mut self, material: impl Material + Send + Sync + 'static) -> MaterialARef {
+        let material = Arc::new(material);
+        self.material.insert(material.name(), material.clone());
+        material
     }
 
     pub fn add_light(&mut self,light: Arc<dyn Light + Send + Sync>) {

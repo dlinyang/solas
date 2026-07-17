@@ -1,19 +1,26 @@
+use gk_math::color::RGB as Color;
+
 pub enum ToneMapping {
     Linear,
+    Reinhard,
 }
-
-use rmu::vector::Color;
 
 impl ToneMapping {
     pub fn tone_mapping(&self, color: Color) -> [u8;3] {
-        match &self {
+        let [r, g, b] = match &self {
             ToneMapping::Linear => {
-                let r = (255f32 * linear_map(color.x)) as u8;
-                let g = (255f32 * linear_map(color.y)) as u8;
-                let b = (255f32 * linear_map(color.z)) as u8;
-                [r,g,b]
+                [linear_map(color.r), linear_map(color.g), linear_map(color.b)]
             },
-        }
+            ToneMapping::Reinhard => {
+                let color = reinhard(color);
+                [color.r, color.g, color.b]
+            }
+        };
+
+        let r = (255f32 * r) as u8;
+        let g = (255f32 * g) as u8;
+        let b = (255f32 * b) as u8;
+        [r,g,b]
     }
 }
 
@@ -25,4 +32,8 @@ fn linear_map(a: f32) -> f32 {
     } else {
         a
     }
+}
+
+fn reinhard(color: Color) -> Color {
+    color / (color + [1.0f32;3].into())
 }

@@ -2,7 +2,7 @@
 name = "solas"
 version = "0.1.0"
 authors = ["dlingyang <ceamel@hotmail.com>"]
-edition = "2018"
+edition = "2024"
 repository = "https://github/dlinyang/ultraviolet_ray"
 categories = ["graphics"]
 
@@ -11,10 +11,13 @@ name = "solas"
 path = "src/lib.rs"
 
 [dependencies]
-num = "0.3.1"
-image = "0.23.12"
-rmu = {git = "https://github.com/dlinyang/rmu"}
+num = "0.4.3"
+image = "*"
+gk_math = {git = "https://github.com/dlinyang/gk_math"}
+rayon = "1.12.0"
 
+[profile.dev.package.gk_math]
+opt-level = 2
 
 [[example]]
  name = "sphere"
