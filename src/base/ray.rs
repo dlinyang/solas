@@ -1,5 +1,6 @@
 use gk_math::base::f32::Vec3;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
@@ -25,5 +26,16 @@ impl Ray {
 
     pub fn get_a_ray(&self, coefficient: f32) -> Vec3 {
         self.origin + coefficient * self.direction
+    }
+}
+use std::fmt;
+
+impl fmt::Display for Ray {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Ray {{ origin: {}, direction: {}, time: {} }}",
+            self.origin, self.direction, self.time
+        )
     }
 }

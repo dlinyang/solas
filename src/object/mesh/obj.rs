@@ -7,7 +7,7 @@ impl Mesh {
     pub fn load_obj<P: AsRef<Path>>(path: P) -> Result<Self, String> {
         let file = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;
         let reader = BufReader::new(file);
-        let mut mesh = Mesh::new("", "");
+        let mut mesh = Mesh::new();
 
         // // Temporary storage for raw vertex data
         // let mut raw_vertices: Vec<[f32; 3]> = Vec::new();
@@ -107,7 +107,7 @@ impl Mesh {
             }
         }
 
-        if mesh.faces.len() > 20 {
+        if mesh.faces.len() > 1000 {
             mesh.build_bvh();
         }
 

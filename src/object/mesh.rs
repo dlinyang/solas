@@ -1,14 +1,12 @@
 use gk_math::base::f32::{Vec3,Vec2};
 use std::f32;
-use crate::base::object::{Object, ObjectTransfrom};
+use crate::base::object::{ObjectBase, ObjectTransfrom};
 use crate::base::intersect::*;
 use crate::base::ray::Ray;
 
 pub mod obj;
 
-pub struct Mesh{
-    pub name: String,
-    pub material: String,
+pub struct Mesh {
     pub origin: Vec3,
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
@@ -18,10 +16,8 @@ pub struct Mesh{
 }
 
 impl Mesh {
-    pub fn new<S: Into<String>>(name: S, material: S) -> Self {
+    pub fn new() -> Self {
         Self {
-            name: name.into(),
-            material: material.into(),
             origin: Vec3::new(0.0, 0.0, 0.0),
             vertices: Vec::new(),
             normals: Vec::new(),
@@ -49,8 +45,25 @@ impl Mesh {
         self.bvh_opt = Some(BVHTree::sah_build(boxes))
     }
 
+    pub fn intersect_triganle_nth(&self, idx: usize, ray: &Ray) -> Option<Hit> {
+        let [a, b, c, an, bn, cn, ac, bc, cc] = &self.faces[idx];
+        triangle_interset(
+            ray,
+            self.vertices[*a], self.vertices[*b], self.vertices[*c],
+            self.normals[*an], self.normals[*bn], self.normals[*cn],
+            self.texcoords[*ac], self.texcoords[*bc], self.texcoords[*cc]
+        )
+        .map(
+            |(time, normal, uv)|
+            Hit::new(time,
+                ray.get_a_ray(time),
+                normal,
+                uv,
+            ))
+    }
+
     //  create a cube
-    pub fn cube(name: impl Into<String>, material: impl Into<String>, length: f32) -> Self {
+    pub fn cube(length: f32) -> Self {
         let mut vertices = Vec::new();
         let mut faces = Vec::new();
         let mut normals = Vec::new();
@@ -117,8 +130,6 @@ impl Mesh {
         faces.push([2, 4, 6, 5, 5, 5, 0, 0, 0]);
 
         Self {
-            name: name.into(),
-            material: material.into(),
             origin: Vec3::new(0.0, 0.0, 0.0),
             vertices,
             normals,
@@ -129,15 +140,7 @@ impl Mesh {
     }
 }
 
-impl Object for Mesh {
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    fn material(&self) -> String {
-        self.material.clone()
-    }
-}
+impl ObjectBase for Mesh {}
 
 impl ObjectTransfrom for Mesh {
     fn scale(&mut self, s: f32) -> &mut Self {
@@ -163,31 +166,25 @@ impl Intersect for Mesh {
         let mut temp_normal = Vec3::new(0.0, 0.0, 0.0);
         let mut temp_uv = Vec2::new(0.0, 0.0);
 
-        // if let Some(bvh) = &self.bvh_opt {
-        //     for idx in bvh.intersect(ray) {
-        //         let [a, b, c, an, bn, cn, ac, bc, cc] = &self.faces[idx];
-        //         if let Some((time, normal, uv)) = triangle_interset(
-        //             ray,
-        //             self.vertices[*a], self.vertices[*b], self.vertices[*c],
-        //             self.normals[*an], self.normals[*bn], self.normals[*cn],
-        //             self.texcoords[*ac], self.texcoords[*bc], self.texcoords[*cc]
-        //         ) {
-        //             if flag {
-        //                 if temp_time > time {
-        //                     temp_time = time;
-        //                     temp_normal = normal;
-        //                     temp_uv = uv;
-        //                 }
-        //             } else {
-        //                 temp_time = time;
-        //                 temp_normal = normal;
-        //                 temp_uv = uv;
-        //                 flag = true;
-        //             }
-        //         }
-        //     }
-        // }
-        // else {
+        if let Some(bvh) = &self.bvh_opt {
+            return bvh.intersect_f(ray, move |idx, ray| {
+                let [a, b, c, an, bn, cn, ac, bc, cc] = &self.faces[*idx];
+                triangle_interset(
+                    ray,
+                    self.vertices[*a], self.vertices[*b], self.vertices[*c],
+                    self.normals[*an], self.normals[*bn], self.normals[*cn],
+                    self.texcoords[*ac], self.texcoords[*bc], self.texcoords[*cc]
+                )
+                .map(
+                    |(time, normal, uv)|
+                    Hit::new(time,
+                        ray.get_a_ray(time),
+                        normal,
+                        uv,
+                    ))
+            });
+        }
+        else {
             for [a,b,c,an,bn,cn,ac,bc,cc] in self.faces.iter() {
                 if let Some((time, normal, uv)) = triangle_interset(
                     ray,
@@ -209,10 +206,10 @@ impl Intersect for Mesh {
                     }
                 }
             }
-        // }
+        }
 
         if flag {
-            Some(Hit::new(temp_time, ray.get_a_ray(temp_time), temp_normal, temp_uv, self.material.clone()))
+            Some(Hit::new(temp_time, ray.get_a_ray(temp_time), temp_normal, temp_uv))
         } else {
             None
         }

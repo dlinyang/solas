@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use crate::base::ray::Ray;
 use crate::bound::*;
+use crate::intersect::Hit;
 
 #[derive(Debug)]
 pub struct BVHTree<B: Bound = AABB, T = String> {
@@ -50,6 +51,73 @@ impl<B: Bound, T: Clone> BVHTree<B, T> {
         }
 
         result
+    }
+
+    pub fn intersect_f<F>(&self, ray: &Ray, f: F) -> Option<Hit>
+    where F: Fn(&T, &Ray) ->  Option<Hit> + Copy
+    {
+        if self.node.intersect(ray) {
+            if let Some(idx) = &self.object {
+                return f(idx, ray);
+            } else {
+                let left_hit_opt = if let Some(node) = &self.left {
+                    node.intersect_f(ray, f)
+                } else { None };
+
+                let right_hit_opt = if let Some(node) = &self.right {
+                    node.intersect_f(ray, f)
+                } else { None };
+
+                return match (left_hit_opt, right_hit_opt) {
+                    (None, None) => None,
+                    (None, Some(hit)) => Some(hit),
+                    (Some(hit), None) => Some(hit),
+                    (Some(lhit), Some(rhit)) => {
+                        if lhit.time < rhit.time {
+                            Some(lhit)
+                        }
+                        else {
+                            Some(rhit)
+                        }
+                    },
+                }
+            }
+        }
+
+        None
+    }
+
+    pub fn intersect_f_idx<F>(&self, ray: &Ray, f: F) -> Option<(Hit, T)>
+    where F: Fn(&T, &Ray) ->  Option<(Hit, T)> + Copy
+    {
+        if self.node.intersect(ray) {
+            if let Some(idx) = &self.object {
+                return f(idx, ray);
+            } else {
+                let left_hit_opt = if let Some(node) = &self.left {
+                    node.intersect_f_idx(ray, f)
+                } else { None };
+
+                let right_hit_opt = if let Some(node) = &self.right {
+                    node.intersect_f_idx(ray, f)
+                } else { None };
+
+                return match (left_hit_opt, right_hit_opt) {
+                    (None, None) => None,
+                    (None, Some(hit)) => Some(hit),
+                    (Some(hit), None) => Some(hit),
+                    (Some(lhit), Some(rhit)) => {
+                        if lhit.0.time < rhit.0.time {
+                            Some(lhit)
+                        }
+                        else {
+                            Some(rhit)
+                        }
+                    },
+                }
+            }
+        }
+        None
     }
 }
 

@@ -18,7 +18,6 @@ impl Scatter {
 }
 
 pub trait Material {
-    fn name(&self) -> String;
     /// Material's scatter property
     fn scatter(&self, ray: &Ray, hit: &Hit) -> Scatter;
     /// Luminescent materials

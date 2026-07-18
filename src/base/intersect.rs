@@ -1,23 +1,22 @@
 use gk_math::base::f32::{Vec2,Vec3};
 use super::ray::Ray;
 
+#[derive(Debug, Clone, Copy)]
 pub struct Hit{
     pub time: f32,
     pub position: Vec3,
     pub normal: Vec3,
     pub uv: Vec2,
-    pub material_name: String,
 }
 
 impl Hit {
     #[inline]
-    pub fn new(time: f32, position: Vec3, normal: Vec3, uv: Vec2, material_name: String) -> Self {
+    pub fn new(time: f32, position: Vec3, normal: Vec3, uv: Vec2) -> Self {
         Self {
             time,
             position,
             normal,
             uv,
-            material_name,
         }
     }
 }
@@ -29,7 +28,6 @@ impl Default for Hit {
             position: Vec3::new(1.0,1.0, 1.0),
             normal: Vec3::new(1.0,1.0, 1.0),
             uv: Vec2::new(1.0, 1.0),
-            material_name: String::new(),
         }
     }
 }

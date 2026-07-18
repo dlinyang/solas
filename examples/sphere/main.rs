@@ -3,11 +3,9 @@ use solas::scene::{Scene,Canvas};
 use solas::base::camera::Camera;
 use solas::material::bsdf::*;
 use solas::renderer::*;
-use gk_math::base::f32::Vec3;
-
-use std::sync::Arc;
-
+use solas::light::PointLight;
 use solas::base::random::RNG;
+use gk_math::base::f32::Vec3;
 
 fn main() {
 
@@ -25,77 +23,82 @@ fn main() {
                              look_at,
                              Vec3::new(0.0, 0.0, 1.0), 20.0,  w as f32/ h as f32, 0.1 , dist_to_focus);
 
-    let sphere0 = Sphere::new("sphere0".into(),"material0".into())
-        .with_radius(0.5)
-        .with_center(Vec3::new(2.5, -1.0, 0.0));
-
-    let sphere1 = Sphere::new("sphere1".into(),"material0".into())
-        .with_radius(1000.0)
-        .with_center(Vec3::new(2.5, -1.0, -1000.5));
-
-    let sphere2 = Sphere::new("sphere2".into(),"material1".into())
-        .with_radius(0.5)
-        .with_center(Vec3::new(1.5, -1.0, 0.0));
-
-    let sphere3 = Sphere::new("sphere3".into(),"material2".into())
-        .with_radius(0.5)
-        .with_center(Vec3::new( 3.5, -1.0, 0.0));
-
-    let mut material0 = Lambertian::new("material0");
-    material0.albedo = Vec3::new(0.1, 0.2, 0.5);
-    let mut material1 = Metal::new("material1");
-    material1.albedo=  Vec3::new(0.8, 0.6, 0.2);
-    material1.fuzz = 0.02;
-    let mut material2 = Dielectric::new("material2");
-    material2.refract_coe = 1.5;
     let mut scene = Scene::new();
-    let mut rng = RNG::new();
+    scene.set_camera(camera);
 
-    for x in 0..20 {
+    let (material_idx, _) = scene.add_material(Lambertian::new().with_albedo(Vec3::new(0.1, 0.2, 0.5)));
+    let sphere = scene.add_object(
+        Sphere::new()
+        .with_radius(0.5)
+        .with_center(Vec3::new(2.5, -1.0, 0.0))
+    );
+    sphere.material = material_idx;
+
+    let (material_idx,_) = scene.add_material(
+        Metal::new()
+            .with_albedo(Vec3::new(0.8, 0.6, 0.2))
+            .with_fuzz(0.02));
+    let sphere = scene.add_object(
+        Sphere::new()
+        .with_radius(1000.0)
+        .with_center(Vec3::new(2.5, -1.0, -1000.5)));
+    sphere.material = material_idx;
+
+    let (material_idx,_) = scene.add_material(Dielectric::new().with_refract_coe(1.5));
+    let sphere = scene.add_object(
+        Sphere::new()
+        .with_radius(0.5)
+        .with_center(Vec3::new(1.5, -1.0, 0.0)));
+    sphere.material = material_idx;
+
+    let sphere = scene.add_object(Sphere::new()
+        .with_radius(0.5)
+        .with_center(Vec3::new( 3.5, -1.0, 0.0)));
+    sphere.material = material_idx;
+
+    let mut rng = RNG::new();
+    for _ in 0..100{
         let choose: f32 = rng.rand();
         let center = Vec3::new(5.0 * rng.rand(), 4.0 * rng.rand(), -0.2);
         if choose < 0.8 {
-            let mut material = Lambertian::new(format!("material{}",x+3));
-            material.albedo = Vec3::new(rng.rand() * rng.rand(),
+            let (material_idx,_) = scene.add_material(
+                Lambertian::new()
+                    .with_albedo(Vec3::new(rng.rand() * rng.rand(),
                                            rng.rand() * rng.rand(),
-                                           rng.rand() * rng.rand());
-            let sphere = Sphere::new(format!("sphere{}", x + 4),format!("material{}", x + 3))
-                .with_radius(0.2)
-                .with_center(center);
-            scene.add_object(Arc::new(sphere));
-            scene.add_material(material);
+                                           rng.rand() * rng.rand())));
+            let sphere = scene.add_object(
+                Sphere::new()
+                    .with_radius(0.2)
+                    .with_center(center));
+            sphere.material = material_idx;
         }
         else if choose < 0.95 {
-            let mut material = Metal::new(format!("material{}",x+3));
-            material.albedo = Vec3::new(rng.rand(),
-                                           rng.rand(),
-                                           rng.rand());
-            material.fuzz = 0.5 * rng.rand();
-            let sphere = Sphere::new(format!("sphere{}", x + 4),format!("material{}", x + 3))
+            let (material_idx,_) = scene.add_material(Metal::new()
+                .with_albedo(Vec3::new(rng.rand(),rng.rand(),rng.rand()))
+                .with_fuzz(0.5 * rng.rand()));
+            let sphere = scene.add_object(
+                Sphere::new()
                .with_radius(0.2)
-               .with_center(center);
-            scene.add_object(Arc::new(sphere));
-            scene.add_material(material);
+               .with_center(center));
+            sphere.material = material_idx;
         }
         else {
-            let mut material = Dielectric::new(format!("material{}",x+3));
-            material.refract_coe = 2.0 * rng.rand();
-            let sphere = Sphere::new(format!("sphere{}", x + 4),format!("material{}", x + 3))
+            let (material_idx, _) = scene.add_material(
+                Dielectric::new()
+                    .with_refract_coe(2.0 * rng.rand()));
+            let sphere = scene.add_object(
+                Sphere::new()
                .with_radius(0.2)
-               .with_center(center);
-            scene.add_object(Arc::new(sphere));
-            scene.add_material(material);
+               .with_center(center));
+            sphere.material = material_idx;
         }
     }
-    scene.add_object(Arc::new(sphere0));
-    scene.add_object(Arc::new(sphere1));
-    scene.add_object(Arc::new(sphere2));
-    scene.add_object(Arc::new(sphere3));
-    scene.add_material(material0);
-    scene.add_material(material1);
-    scene.add_material(material2);
-    scene.set_camera(camera);
+
+    let light = PointLight::create(Vec3::new(5f32, 5f32, 100f32),Vec3::new(1.0, 1.0, 1.0).into(), 10.0 );
+    scene.add_light(light);
+
     scene.build_bvh_tree();
+
     let renderer = Renderer::new(scene, canvas, s);
 
     let start = std::time::Instant::now();

@@ -160,14 +160,19 @@ impl Renderer {
     fn shade(scene: &Arc<Scene>, ray: &Ray, depth: usize, max_depth: usize) -> Color {
         // ray tracing depth
         if depth < max_depth {
-            if let Some(hit) = scene.intersect(ray, 0.001, MAX) {
+            if let Some((hit, obj_idx)) = scene.intersect(ray, 0.001, MAX) {
+                let obj_ref = &scene.objects[obj_idx];
                 // material
-                if let Some(material) = scene.material.get(&hit.material_name) {
+                if obj_ref.material < scene.material.len() {
+                    let material = &scene.material[obj_ref.material];
                     let scatter = material.scatter(ray, &hit);
                     return scatter.attenuation * Renderer::shade(scene, &scatter.scattered, depth + 1, max_depth);
+                } else {
+                    return Color::new(0.0, 0.0, 0.0);
                 }
             }
         }
+
         let mut attenuation = scene.skybox.ambient(ray);
 
         for light in scene.lights.iter() {

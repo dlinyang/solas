@@ -1,21 +1,17 @@
 use gk_math::base::f32::{Vec2, Vec3};
 use std::f32;
-use crate::base::object::{Object, ObjectTransfrom};
+use crate::base::object::{ObjectBase, ObjectTransfrom};
 use crate::base::intersect::*;
 use crate::base::ray::Ray;
 
 pub struct Sphere{
-    pub name: String,
-    pub material: String,
     pub center: Vec3,
     pub radius: f32,
 }
 
 impl Sphere {
-    pub fn new(name: String, material: String) -> Self{
+    pub fn new() -> Self{
         Sphere{
-            name,
-            material,
             center: Vec3::new(0.0, 0.0, 0.0),
             radius: 1.0,
         }
@@ -40,15 +36,7 @@ impl Sphere {
     }
 }
 
-impl Object for Sphere {
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    fn material(&self) -> String {
-        self.material.clone()
-    }
-}
+impl ObjectBase for Sphere {}
 
 impl ObjectTransfrom for Sphere {
     fn scale(&mut self, s: f32) -> &mut Self {
@@ -75,7 +63,7 @@ impl Intersect for Sphere {
                 let time = temp;
                 let position = ray.get_a_ray(temp);
                 let normal = (position - self.center) / self.radius;
-                return Some(Hit::new(time, position, normal, Vec2::new(0.0, 0.0), self.material.clone()))
+                return Some(Hit::new(time, position, normal, Vec2::new(0.0, 0.0)))
             }
 
             temp = (-b + (b * b - a * c).sqrt()) / a;
@@ -83,7 +71,7 @@ impl Intersect for Sphere {
                 let time = temp;
                 let position = ray.get_a_ray(temp);
                 let normal = (position - self.center) / self.radius;
-                return Some(Hit::new(time, position, normal, Vec2::new(0.0, 0.0), self.material.clone()))
+                return Some(Hit::new(time, position, normal, Vec2::new(0.0, 0.0)))
             }
         }
 
