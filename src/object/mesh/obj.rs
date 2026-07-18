@@ -9,14 +9,6 @@ impl Mesh {
         let reader = BufReader::new(file);
         let mut mesh = Mesh::new();
 
-        // // Temporary storage for raw vertex data
-        // let mut raw_vertices: Vec<[f32; 3]> = Vec::new();
-        // let mut raw_normals: Vec<[f32; 3]> = Vec::new();
-        // let mut raw_texcoords: Vec<[f32; 2]> = Vec::new();
-
-        // // Store face indices as (vertex, texcoord, normal) tuples
-        // let mut face_indices: Vec<(u32, Option<u32>, Option<u32>)> = Vec::new();
-
         for (line_num, line) in reader.lines().enumerate() {
             let line = line.map_err(|e| format!("Line {}: {}", line_num + 1, e))?;
             let line = line.trim().to_string();
@@ -93,21 +85,18 @@ impl Mesh {
                         return  Err(format!("line {}: wrong face point",line_num));
                     }
 
-                    for i in 0..face_verts.len() - 2 {
-                        let (av, avn, avt) = face_verts[i];
-                        let (bv, bvn, bvt) = face_verts[i+1];
-                        let (cv, cvn, cvt) = face_verts[i+2];
-
+                    let (av, avn, avt) = face_verts[0];
+                    for i in 1..=face_verts.len() - 2 {
+                        let (bv, bvn, bvt) = face_verts[i];
+                        let (cv, cvn, cvt) = face_verts[i+1];
                         mesh.faces.push([av, bv, cv, avn, bvn, cvn, avt, bvt, cvt]);
                     }
-
-
                 }
                 _ => {} // Ignore other lines (usemtl, mtllib, etc.)
             }
         }
 
-        if mesh.faces.len() > 1000 {
+        if mesh.faces.len() > 100 {
             mesh.build_bvh();
         }
 

@@ -5,6 +5,7 @@ use crate::base::intersect::*;
 use crate::base::ray::Ray;
 
 pub mod obj;
+pub mod cube;
 
 pub struct Mesh {
     pub origin: Vec3,
@@ -12,7 +13,8 @@ pub struct Mesh {
     pub normals: Vec<Vec3>,
     pub texcoords: Vec<Vec2>,
     pub faces: Vec<[usize;9]>, // vertex | normal | texcoords
-    pub bvh_opt: Option<BVHTree<AABB,usize>>,
+    // pub bvh_opt: Option<BVHTree<AABB,FixedVec<usize,32>>>,
+    pub bvh_opt: Option<FlatBVHTree<AABB, FixedVec<usize,32>>>
 }
 
 impl Mesh {
@@ -42,7 +44,7 @@ impl Mesh {
             (idx, AABB::new(x_min, x_max, y_min, y_max, z_min, z_max))
         }).collect();
 
-        self.bvh_opt = Some(BVHTree::sah_build(boxes))
+        self.bvh_opt = Some(FlatBVHTree::sah_build_multi_index_in_leaf(boxes))
     }
 
     pub fn intersect_triganle_nth(&self, idx: usize, ray: &Ray) -> Option<Hit> {
@@ -60,83 +62,6 @@ impl Mesh {
                 normal,
                 uv,
             ))
-    }
-
-    //  create a cube
-    pub fn cube(length: f32) -> Self {
-        let mut vertices = Vec::new();
-        let mut faces = Vec::new();
-        let mut normals = Vec::new();
-        let mut texcoords = Vec::new();
-
-        let half_length = length / 2.0f32;
-
-        /* xyz coord
-           v5----v4
-          / |  / |
-        v1--|-v0 |
-        | v7--|-v6
-        | /   | /
-        v3----v2 */
-        vertices.push(Vec3::new(half_length, half_length, half_length));//v0
-        vertices.push(Vec3::new(-half_length, half_length, half_length));//v1
-        vertices.push(Vec3::new(half_length, half_length, -half_length));//v2
-        vertices.push(Vec3::new(-half_length, half_length, -half_length));//v3
-        vertices.push(Vec3::new(half_length, -half_length, half_length));//v4
-        vertices.push(Vec3::new(-half_length, -half_length, half_length));//v5
-        vertices.push(Vec3::new(half_length, -half_length, -half_length));//v6
-        vertices.push(Vec3::new(-half_length, -half_length, -half_length));//v7
-
-        /*
-              t
-              ^   b
-              | /
-        l<—— a ——> r
-            /|
-          f  b
-        */
-
-        normals.push(Vec3::new(0.0, 1.0, 0.0));
-        normals.push(Vec3::new(0.0, -1.0, 0.0));
-        normals.push(Vec3::new(0.0, 0.0, 1.0));
-        normals.push(Vec3::new(0.0, 0.0, -1.0));
-        normals.push(Vec3::new(-1.0, 0.0, 0.0));
-        normals.push(Vec3::new(1.0, 0.0, 0.0));
-
-        texcoords.push(Vec2::new(0.0, 0.0));
-
-        //front
-        faces.push([1, 2, 3, 0, 0, 0, 0, 0, 0]);
-        faces.push([0, 1, 2, 0, 0, 0, 0, 0, 0]);
-
-        //back
-        faces.push([4, 5, 6, 1, 1, 1, 0, 0, 0]);
-        faces.push([5, 6, 7, 1, 1, 1, 0, 0, 0]);
-
-        // top
-        faces.push([0, 1, 4, 2, 2, 2, 0, 0, 0]);
-        faces.push([1, 4, 5, 2, 2, 2, 0, 0, 0]);
-
-        // bottom
-        faces.push([2, 3, 6, 3, 3, 3, 0, 0, 0]);
-        faces.push([3, 6, 7, 3, 3, 3, 0, 0, 0]);
-
-        // left
-        faces.push([1, 3, 5, 4, 4, 4, 0, 0, 0]);
-        faces.push([3, 5, 7, 4, 4, 4, 0, 0, 0]);
-
-        // right
-        faces.push([0, 2, 4, 5, 5, 5, 0, 0, 0]);
-        faces.push([2, 4, 6, 5, 5, 5, 0, 0, 0]);
-
-        Self {
-            origin: Vec3::new(0.0, 0.0, 0.0),
-            vertices,
-            normals,
-            texcoords,
-            faces,
-            bvh_opt: None,
-        }
     }
 }
 
@@ -160,31 +85,32 @@ impl ObjectTransfrom for Mesh {
 
 impl Intersect for Mesh {
     fn intersect(&self,ray: &Ray, _t_min: f32, _t_max: f32) -> Option<Hit> {
-
-        let mut flag = false;
-        let mut temp_time =  Default::default();
-        let mut temp_normal = Vec3::new(0.0, 0.0, 0.0);
-        let mut temp_uv = Vec2::new(0.0, 0.0);
-
         if let Some(bvh) = &self.bvh_opt {
-            return bvh.intersect_f(ray, move |idx, ray| {
-                let [a, b, c, an, bn, cn, ac, bc, cc] = &self.faces[*idx];
-                triangle_interset(
-                    ray,
-                    self.vertices[*a], self.vertices[*b], self.vertices[*c],
-                    self.normals[*an], self.normals[*bn], self.normals[*cn],
-                    self.texcoords[*ac], self.texcoords[*bc], self.texcoords[*cc]
-                )
-                .map(
-                    |(time, normal, uv)|
-                    Hit::new(time,
-                        ray.get_a_ray(time),
-                        normal,
-                        uv,
-                    ))
+            return bvh.intersect_f(ray, move |idx_array, ray| {
+                let mut ret: Option<Hit> = None;
+                for i in 0..idx_array.len() {
+                    let [a, b, c, an, bn, cn, ac, bc, cc] = &self.faces[idx_array.data[i]];
+                    if let Some((time, normal, uv)) = triangle_interset(
+                        ray,
+                        self.vertices[*a], self.vertices[*b], self.vertices[*c],
+                        self.normals[*an], self.normals[*bn], self.normals[*cn],
+                        self.texcoords[*ac], self.texcoords[*bc], self.texcoords[*cc]
+                    ) {
+                        if let Some(pre_ret) = &ret {
+                            if pre_ret.time > time {
+                                ret = Some(Hit::new(time, ray.get_a_ray(time), normal, uv))
+                            }
+                        } else {
+                            ret = Some(Hit::new(time, ray.get_a_ray(time), normal, uv))
+                        }
+                    }
+                }
+                ret
             });
         }
         else {
+            let mut ret: Option<Hit> = None;
+
             for [a,b,c,an,bn,cn,ac,bc,cc] in self.faces.iter() {
                 if let Some((time, normal, uv)) = triangle_interset(
                     ray,
@@ -192,26 +118,17 @@ impl Intersect for Mesh {
                     self.normals[*an], self.normals[*bn], self.normals[*cn],
                     self.texcoords[*ac], self.texcoords[*bc], self.texcoords[*cc]
                 ) {
-                    if flag {
-                        if temp_time > time {
-                            temp_time = time;
-                            temp_normal = normal;
-                            temp_uv = uv;
+                    if let Some(pre_ret) = &ret {
+                        if pre_ret.time > time {
+                            ret = Some(Hit::new(time, ray.get_a_ray(time), normal, uv))
                         }
                     } else {
-                        temp_time = time;
-                        temp_normal = normal;
-                        temp_uv = uv;
-                        flag = true;
+                        ret = Some(Hit::new(time, ray.get_a_ray(time), normal, uv))
                     }
                 }
             }
-        }
 
-        if flag {
-            Some(Hit::new(temp_time, ray.get_a_ray(temp_time), temp_normal, temp_uv))
-        } else {
-            None
+            return ret;
         }
     }
 }
@@ -259,7 +176,7 @@ fn triangle_interset(
 }
 
 use crate::base::bound::*;
-use crate::bvh::BVHTree;
+use crate::bvh::*;
 
 impl BoundBuilder for Mesh {
     fn get_aabb(&self) -> AABB {

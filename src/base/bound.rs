@@ -5,7 +5,7 @@ use gk_math::base::f32::Vec3;
 /// mostly is AABB
 /// maybe will use OBB
 pub trait Bound {
-    fn intersect(&self, ray :&Ray) -> bool;
+    fn intersect(&self, ray :&Ray) -> Option<f32>;
     fn contain(&self, node: &Self) -> bool;
     fn point_in(&self, point: &Vec3) -> bool;
     fn surround(left_box: &Self, right_box: &Self) -> Self;
@@ -56,9 +56,9 @@ impl AABB {
     }
 }
 
-// xₘᵢₙ - α < at < xₘₐₓ - α
+/// xₘᵢₙ - α < at < xₘₐₓ - α
 #[inline]
-fn compute(origin: f32, direction: f32,min: f32,max :f32) -> (f32,f32) {
+fn compute(origin: f32, direction: f32, min: f32,max :f32) -> (f32,f32) {
     let d = 1f32 / direction;
     let t0 = (min - origin) * d;
     let t1 = (max - origin) * d;
@@ -77,7 +77,7 @@ fn min(x: f32, y: f32) -> f32 {
 }
 
 impl Bound for AABB {
-    fn intersect(&self, ray: &Ray) -> bool {
+    fn intersect(&self, ray: &Ray) -> Option<f32> {
 
         let (tx0,tx1) = compute(ray.origin.x, ray.direction.x, self.x_min, self.x_max);
         let (ty0,ty1) = compute(ray.origin.y, ray.direction.y, self.y_min, self.y_max);
@@ -87,16 +87,16 @@ impl Bound for AABB {
         let max = max(max(tx0,ty0),tz0);
 
         if min >= max {
-            false
+            None
         } else {
-            true
+            Some(min)
         }
     }
 
     fn contain(&self, node: &AABB) -> bool {
         if node.x_min < self.x_min || node.x_max > self.x_max {
             false
-        } else if node.y_min < self.x_min || node.y_max > self.x_max {
+        } else if node.y_min < self.x_min || node.y_max > self.y_max {
             false
         } else if node.z_min < self.z_min && node.z_max > self.z_max {
             false
@@ -110,13 +110,12 @@ impl Bound for AABB {
             false
         } else if self.y_min > point.x || self.y_max < point.y {
             false
-        } else if self.z_min > point.z || self.z_min < point.z {
+        } else if self.z_min > point.z || self.z_max < point.z {
             false
         } else {
             true
         }
     }
-
 
     fn surround(left_box: &AABB, right_box: &AABB) -> AABB {
         AABB::new(

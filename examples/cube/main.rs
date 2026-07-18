@@ -26,21 +26,21 @@ fn main() {
 
 
     let mut scene = Scene::new();
-    let (blue_m_idx, _) = scene.add_material(
+    let blue_m_idx = scene.add_material(
         Lambertian::new()
             .with_albedo(Vec3::new(0.1, 0.2, 0.5)));
 
-    let (red_m_idx, _) = scene.add_material(
+    let red_m_idx = scene.add_material(
         Lambertian::new()
             .with_albedo(Vec3::new(0.5, 0.2, 0.1)));
 
-    let (metal_m_idx, _) = scene.add_material(
+    let metal_m_idx = scene.add_material(
         Metal::new()
         .with_albedo(Vec3::new(0.8, 0.6, 0.2))
         .with_fuzz(0.02));
 
-    let cube =scene.add_object(Mesh::cube(2.0));
-    cube.material = red_m_idx;
+    // let cube =scene.add_object(Mesh::cube(2.0));
+    // cube.material = red_m_idx;
 
     let sphere = scene.add_object(
         Sphere::new()
@@ -51,7 +51,7 @@ fn main() {
     let obj = scene.add_object(Mesh::load_obj("test.obj").unwrap());
     obj.material = metal_m_idx;
 
-    let light = PointLight::create(Vec3::new(5f32, 5f32, 5f32),Vec3::new(1.0, 1.0, 1.0).into(), 1.0 );
+    let light = PointLight::create(Vec3::new(5f32, 5f32, 5f32),Vec3::new(1.0, 1.0, 1.0).into(), 10.0 );
 
     scene.set_camera(camera);
 

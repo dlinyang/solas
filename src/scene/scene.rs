@@ -5,16 +5,14 @@ use crate::base::object::{Object, ObjectBase};
 // use crate::base::bound::*;
 use crate::base::bvh::BVHTree;
 
-use std::sync::Arc;
-
-pub type MaterialARef = Arc<dyn Material + Sync + Send>;
+pub type MaterialARef = Box<dyn Material + Sync + Send>;
 
 pub struct Scene {
     pub objects: Vec<Object>,
     pub bvh_tree: Option<BVHTree<AABB,usize>>, // object contain bvh tree
     pub material: Vec<MaterialARef>,
-    pub skybox: Arc<dyn SkyBox + Sync + Send>,
-    pub lights: Vec<Arc<dyn Light + Sync + Send>>,
+    pub skybox: Box<dyn SkyBox + Sync + Send>,
+    pub lights: Vec<Box<dyn Light + Sync + Send>>,
     pub camera: Camera,
 }
 
@@ -25,7 +23,7 @@ impl Scene {
             objects: Vec::new(),
             bvh_tree: None,
             material: Vec::new(),
-            skybox: Arc::new(Background::new()),
+            skybox: Box::new(Background::new()),
             lights: Vec::new(),
             camera: Camera::default(),
         }
@@ -43,14 +41,14 @@ impl Scene {
 
     /// the material buffer vec
     /// - return the material index and ref
-    pub fn add_material(&mut self, material: impl Material + Send + Sync + 'static) -> (usize, MaterialARef) {
-        let material = Arc::new(material);
-        self.material.push(material.clone());
-        (self.material.len(), material.clone())
+    pub fn add_material(&mut self, material: impl Material + Send + Sync + 'static) -> usize {
+        let material = Box::new(material);
+        self.material.push(material);
+        return self.material.len() - 1
     }
 
     pub fn add_light(&mut self,light: impl Light + Send + Sync + 'static) {
-        self.lights.push(Arc::new(light));
+        self.lights.push(Box::new(light));
     }
 
     pub fn set_camera(&mut self, camera: Camera) {
