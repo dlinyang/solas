@@ -104,3 +104,20 @@ impl Material for Dielectric {
         Scatter::new(self.albedo.into(), scattered)
     }
 }
+
+// use  gk_math::color::RGB as Color;
+
+// pub struct IlluminatioMat {
+//     color: Color,
+//     brightness: f32,
+// }
+
+// impl Material for  Illumination‌Mat {
+//     fn scatter(&self, ray: &Ray, _hit: &Hit) -> Scatter {
+//         Scatter { attenuation: Color::zero(), scattered: *ray }
+//     }
+
+//     fn emit(&self, _ray: &Ray) -> Color {
+//         self.brightness * self.color
+//     }
+// }

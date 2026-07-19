@@ -96,7 +96,7 @@ impl Mesh {
             }
         }
 
-        if mesh.faces.len() > 100 {
+        if mesh.faces.len() > 50 {
             mesh.build_bvh();
         }
 

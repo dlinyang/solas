@@ -332,7 +332,7 @@ dependencies = [
 [[package]]
 name = "gk_math"
 version = "0.1.0"
-source = "git+https://github.com/dlinyang/gk_math#1ecdd8c4f4016f854752ddfe1d35acc35b94c840"
+source = "git+https://github.com/dlinyang/gk_math#85622e3ca4224e0c8df11efe5ac47c6ed51b6fec"
 dependencies = [
  "macro_utils",
 ]
@@ -464,7 +464,7 @@ dependencies = [
 [[package]]
 name = "macro_utils"
 version = "0.1.0"
-source = "git+https://github.com/dlinyang/gk_math#1ecdd8c4f4016f854752ddfe1d35acc35b94c840"
+source = "git+https://github.com/dlinyang/gk_math#85622e3ca4224e0c8df11efe5ac47c6ed51b6fec"
 dependencies = [
  "proc-macro2",
  "quote",

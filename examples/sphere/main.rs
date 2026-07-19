@@ -13,7 +13,7 @@ fn main() {
 
     let w: usize = 1920;
     let h: usize = 1080;
-    let s: usize = 10;
+    let s: usize = 64;
     let canvas = Canvas::new(w, h, 1.0, 2.0);
 
     let look_from = Vec3::new(-8.0, 5.0, 0.0);
@@ -94,7 +94,7 @@ fn main() {
         }
     }
 
-    let light = PointLight::create(Vec3::new(5f32, 5f32, 100f32),Vec3::new(1.0, 1.0, 1.0).into(), 10.0 );
+    let light = PointLight::create(Vec3::new(5f32, 5f32, 100f32),Vec3::new(1.0, 1.0, 1.0).into(), 100.0 );
     scene.add_light(light);
 
     scene.build_bvh_tree();
@@ -102,10 +102,10 @@ fn main() {
     let renderer = Renderer::new(scene, canvas, s);
 
     let start = std::time::Instant::now();
-    let image = renderer.multi_thread_render(64, 64, 16, 10);
+    let image = renderer.multi_thread_render(64, 64, 16, 32);
 
     let end = std::time::Instant::now();
     println!("coast time: {:?}", end.duration_since(start));
 
-    image.write_to_file(solas::tone_mapping::ToneMapping::Reinhard, "image_out/sphere.png").unwrap();
+    image.write_to_file(solas::tone_mapping::ToneMapping::Linear, "image_out/sphere.png").unwrap();
 }

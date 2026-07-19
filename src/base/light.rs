@@ -4,6 +4,7 @@ use super::ray::Ray;
 
 pub trait Light {
     fn radiation(&self,ray: &Ray) -> Color;
+    fn get_ray(&self, to_point: Vec3) -> Ray;
 }
 
 pub struct PointLight {
@@ -36,9 +37,13 @@ impl Light for PointLight {
         let light_direction = self.origin - ray.origin;
         let cos = Vec3::dot(&light_direction, &ray.direction) / (light_direction.length() * ray.direction.length());
         if cos > 0.0 {
-            self.color  * cos
+            self.brightness * self.color  * cos / light_direction.length_squared()
         } else {
             Color::new(0.0, 0.0, 0.0)
         }
+    }
+
+    fn get_ray(&self, to_point: Vec3) -> Ray {
+        Ray { origin: to_point, direction: (self.origin - to_point ).normalized(), time: 0.001 }
     }
 }

@@ -16,7 +16,7 @@ impl ImageData {
         Self {
             width: w,
             height: h,
-            data: vec![Color::new(0.0, 0.0, 0.0); w * h],
+            data: vec![Color::zero(); w * h],
         }
     }
 
@@ -44,6 +44,10 @@ impl ImageData {
         }
         img_buf.save(path).map_err(|err|  err.to_string())?;
         Ok(())
+    }
+
+    pub fn raw(&mut self) -> *mut Color {
+        self.data.as_mut_ptr()
     }
 }
 

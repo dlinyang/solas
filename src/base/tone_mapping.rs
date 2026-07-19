@@ -35,5 +35,5 @@ fn linear_map(a: f32) -> f32 {
 }
 
 fn reinhard(color: Color) -> Color {
-    color / (color + [1.0f32;3].into())
+    color / (color + Color::one())
 }

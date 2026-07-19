@@ -14,7 +14,7 @@ pub struct Mesh {
     pub texcoords: Vec<Vec2>,
     pub faces: Vec<[usize;9]>, // vertex | normal | texcoords
     // pub bvh_opt: Option<BVHTree<AABB,FixedVec<usize,32>>>,
-    pub bvh_opt: Option<FlatBVHTree<AABB, FixedVec<usize,32>>>
+    pub bvh_opt: Option<FlatBVHTree<AABB, FixedVec<usize,16>>>
 }
 
 impl Mesh {
